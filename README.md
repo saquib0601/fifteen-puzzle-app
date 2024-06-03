@@ -40,5 +40,9 @@ Make sure you have Node.js and npm installed. You can download them from [Node.j
 
 4. Open your browser and go to `http://localhost:3000`
 
+## Deployment
+
+The app is deployed and can be accessed at [https://fifteen-puzzle-5eu6hv3i7-saquib-alams-projects.vercel.app/].
+
 ## Contact
 - For any questions or suggestions, feel free to connect with me.

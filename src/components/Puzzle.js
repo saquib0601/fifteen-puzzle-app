@@ -211,7 +211,6 @@ const Puzzle = () => {
       <div className="instructions">
         <p>Move tiles in grid to order them from 1 to 15</p>
         <p>To move a tile, you can click on it or use your arrow keys.</p>
-        <p>Press ESC to pause game.</p>
       </div>
     </div>
   );
