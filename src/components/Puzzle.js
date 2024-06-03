@@ -25,13 +25,45 @@ const Puzzle = () => {
     return () => clearInterval(timerRef.current);
   }, [isPaused]);
 
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (!isPaused) {
+        switch (e.key) {
+          case 'ArrowUp':
+            moveTile('up');
+            break;
+          case 'ArrowDown':
+            moveTile('down');
+            break;
+          case 'ArrowLeft':
+            moveTile('left');
+            break;
+          case 'ArrowRight':
+            moveTile('right');
+            break;
+          case 'Escape':
+            setIsPaused(true);
+            break;
+          default:
+            break;
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isPaused, puzzle]);
+
   const shufflePuzzle = () => {
-    let shuffledPuzzle = [...puzzle];
-    shuffledPuzzle.sort(() => Math.random() - 0.5);
+    let shuffledPuzzle;
+    do {
+      shuffledPuzzle = [...initialPuzzle];
+      shuffledPuzzle.sort(() => Math.random() - 0.5);
+    } while (!checkSolvable(shuffledPuzzle));
+  
     setPuzzle(shuffledPuzzle);
-    const solvable = checkSolvable(shuffledPuzzle);
-    setIsSolvable(solvable);
-    setMessage(solvable ? '' : 'Not solvable');
+    setIsSolvable(true); // Puzzle is shuffled to a solvable configuration
+    setMessage('');
   };
 
   const checkSolvable = (puzzle) => {
@@ -46,9 +78,21 @@ const Puzzle = () => {
     return inversions % 2 === 0;
   };
 
+  const checkUnsolvable = (puzzle) => {
+    let blankRowFromBottom = 4 - Math.floor(puzzle.indexOf(null) / 4);
+    let inversions = 0;
+    for (let i = 0; i < puzzle.length; i++) {
+      for (let j = i + 1; j < puzzle.length; j++) {
+        if (puzzle[i] && puzzle[j] && puzzle[i] > puzzle[j]) {
+          inversions++;
+        }
+      }
+    }
+    return (blankRowFromBottom % 2 === 0 && inversions % 2 !== 0);
+  };
+
   const helpStep = () => {
     if (isSolvable) {
-      // Basic one-step solver (should be replaced with an actual solver)
       const emptyIndex = puzzle.indexOf(null);
       const neighborIndex = emptyIndex - 1 >= 0 ? emptyIndex - 1 : emptyIndex + 1;
       const newPuzzle = [...puzzle];
@@ -59,15 +103,47 @@ const Puzzle = () => {
   };
 
   const handleTileClick = (index) => {
+    if (!isPaused) {
+      moveTile(index);
+    }
+  };
+
+  const moveTile = (directionOrIndex) => {
     const emptyIndex = puzzle.indexOf(null);
-    if (
-      index === emptyIndex - 1 ||
-      index === emptyIndex + 1 ||
-      index === emptyIndex - 4 ||
-      index === emptyIndex + 4
-    ) {
+    let targetIndex = -1;
+
+    if (typeof directionOrIndex === 'string') {
+      switch (directionOrIndex) {
+        case 'up':
+          if (emptyIndex + 4 < 16) targetIndex = emptyIndex + 4;
+          break;
+        case 'down':
+          if (emptyIndex - 4 >= 0) targetIndex = emptyIndex - 4;
+          break;
+        case 'left':
+          if (emptyIndex % 4 !== 3) targetIndex = emptyIndex + 1;
+          break;
+        case 'right':
+          if (emptyIndex % 4 !== 0) targetIndex = emptyIndex - 1;
+          break;
+        default:
+          break;
+      }
+    } else {
+      const index = directionOrIndex;
+      if (
+        index === emptyIndex - 1 ||
+        index === emptyIndex + 1 ||
+        index === emptyIndex - 4 ||
+        index === emptyIndex + 4
+      ) {
+        targetIndex = index;
+      }
+    }
+
+    if (targetIndex !== -1) {
       const newPuzzle = [...puzzle];
-      [newPuzzle[emptyIndex], newPuzzle[index]] = [newPuzzle[index], newPuzzle[emptyIndex]];
+      [newPuzzle[emptyIndex], newPuzzle[targetIndex]] = [newPuzzle[targetIndex], newPuzzle[emptyIndex]];
       setPuzzle(newPuzzle);
       setMoves((prevMoves) => prevMoves + 1);
     }
@@ -80,6 +156,16 @@ const Puzzle = () => {
     setIsPaused(true);
     setMessage('');
     clearInterval(timerRef.current);
+  };
+
+  const handleStartPauseClick = () => {
+    if (isPaused) {
+      shufflePuzzle();
+      setIsPaused(false);
+    } else {
+      setIsPaused(true);
+      clearInterval(timerRef.current);
+    }
   };
 
   const renderPuzzle = () => {
@@ -99,7 +185,7 @@ const Puzzle = () => {
       <div className="controls">
         <button onClick={shufflePuzzle}>Shuffle</button>
         <button onClick={helpStep}>Help Me</button>
-        <button onClick={() => setIsPaused(!isPaused)}>{isPaused ? 'Start' : 'Pause'}</button>
+        <button onClick={handleStartPauseClick}>{isPaused ? 'Start' : 'Pause'}</button>
         <button onClick={resetGame}>Reset</button>
         <div className="message">{message}</div>
       </div>
@@ -107,7 +193,7 @@ const Puzzle = () => {
         <div>Moves: {moves}</div>
         <div>Time: {time}s</div>
       </div>
-      <div className="puzzle-grid">{renderPuzzle()}</div>
+      <div className={`puzzle-grid ${isPaused ? 'paused' : ''}`}>{renderPuzzle()}</div>
       <div className="instructions">
         <p>Move tiles in grid to order them from 1 to 15</p>
         <p>To move a tile, you can click on it or use your arrow keys.</p>
