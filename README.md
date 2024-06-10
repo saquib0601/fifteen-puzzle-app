@@ -42,7 +42,7 @@ Make sure you have Node.js and npm installed. You can download them from [Node.j
 
 ## Deployment
 
-The app is deployed and can be accessed at [https://fifteen-puzzle-5eu6hv3i7-saquib-alams-projects.vercel.app/].
+The app is deployed and can be accessed at [https://fifteen-puzzle-app.vercel.app/].
 
 ## Contact
 - For any questions or suggestions, feel free to connect with me.
